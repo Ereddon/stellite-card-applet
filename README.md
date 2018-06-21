@@ -4,7 +4,7 @@ A javacard applet for secure, low cost hardware wallet for StellitePay
 This project is an attempt to create low cost but secure hardware wallet, to be able to do transaction with StellitePay. Using [Javacard](https://en.wikipedia.org/wiki/Java_Card), we could implement basic data storage and cryptographical task securely in within card.
 
 Some advantages in using a smartcard to do transaction
-* **Offline device**. Use it like you are using your credit/debit card on merchant POS. Imagine your phone battery run out or not within cellular coverage, but you need to pay using StellitePay.
+* **Offline device**. Use it like you are using your credit/debit card on merchant POS. Imagine your are overseas, with phone battery run out or not within cellular coverage, but you need to pay using StellitePay securely.
 * **End to end Security**. As all transaction is encrypted by default from card to stellitepay server. See [security design](https://github.com/Ereddon/stellite-card-applet/wiki/Security-Design), there is no way merchant could sniff, see or steal your data while doing transaction. 
 * **User friendly**. Well, it is just a plastic card reside in your pocket.
 * **Theft-proof**. The card is protected by PIN. Don't you worry about it being stolen. Just build another one.
