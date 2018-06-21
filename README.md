@@ -15,3 +15,5 @@ Some advantages in using a smartcard to do transaction
 ![](https://s8.postimg.cc/frfmasiol/Stellite_Card_txs_model_draft_02_rev2.png)
 
 This is yet to be final design, but open, peer-reviewed security design are preferred to be used as a foundation. Pros review are encouraged to make it a really good security design. 
+
+*NOTE : currently under development and no usable code available yet*
