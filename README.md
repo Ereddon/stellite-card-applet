@@ -10,3 +10,8 @@ Some advantages in using a smartcard to do transaction
 * **Theft-proof**. The card is protected by PIN. Don't you worry about it being stolen. Just build another one.
 * **DIY**. Built you own card offline at home is encouraged. Your credential are not to shared with anyone else.
 
+# a glimpse look at the security design
+
+![](https://s8.postimg.cc/frfmasiol/Stellite_Card_txs_model_draft_02_rev2.png)
+
+This is yet to be final design, but open, peer-reviewed security design are preferred to be used as a foundation. Pros review are encouraged to make it a really good security design. 
