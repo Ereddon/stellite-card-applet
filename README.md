@@ -1,5 +1,5 @@
 # stellite-card-applet
-A javacard applet for secure, low cost hardware wallet for StellitePay
+A javacard applet for secure, low cost stellitepay hardware wallet. 
 
 This project is an attempt to create low cost but secure hardware wallet, to be able to do transaction with StellitePay. Using [Javacard](https://en.wikipedia.org/wiki/Java_Card), we could implement basic data storage and cryptographical task securely in within card.
 
