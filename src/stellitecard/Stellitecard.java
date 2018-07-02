@@ -10,28 +10,24 @@ import javacard.framework.Util;
 import javacard.framework.APDU;
 import javacard.framework.JCSystem;
 import javacard.security.KeyBuilder;
-import javacard.security.KeyPair;
-import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
 import javacard.security.RandomData;
 import javacardx.crypto.Cipher;
 import javacard.security.MessageDigest;
 import javacard.security.Signature;
-import javacard.security.CryptoException;
 
 /**
- * @author 
+ * @author ereddon - eralinkindo@gmail.com 
  *
  */
 public class Stellitecard extends Applet {
-	
+
 	// user credentials are meant to be hardcoded for security
 	private static final byte[] userEmail = {'t','e','s','t','@','x','t','l','.','c','a','s','h',};
 	private static final byte[] userPassword = {'p','a','s','s','w','o','r','d'};
 	private static byte[] userHash;
 	// stellitepay public key
-	private static final byte[] stellitePubKey = {48, (byte) 130, 1, 10, 2, (byte) 130, 1, 1, 0, (byte)163, (byte)248, (byte)160, 76, 1, 27, 107, (byte)132, (byte)131, (byte)156, 110, (byte)195, 49, 124, 95, (byte)237, 58, (byte)248, (byte)130, (byte)249, (byte)149, 106, (byte)161, 75, (byte)129, (byte)217, (byte)180, (byte)232, 54, 10, 66, 123, (byte)245, (byte)233, 59, 66, (byte)174, (byte)215, 50, (byte)150, 60, (byte)242, (byte)249, 114, (byte)237, (byte)208, 123, 31, 110, (byte)201, 13, (byte)230, 75, 116, (byte)224, (byte)254, 37, (byte)140, 15, 56, 13, 117, (byte)158, 17, 89, (byte)246, (byte)162, 18, (byte)227, 44, 76, (byte)168, 30, 74, 6, 41, 88, 103, 111, (byte)165, (byte)133, 42, (byte)182, 41, (byte)218, 121, (byte)195, 71, (byte)186, 75, 27, 84, 33, (byte)160, (byte)235, (byte)214, (byte)130, 93, (byte)216, (byte)178, 54, (byte)200, 26, (byte)241, (byte)136, (byte)140, (byte)144, 126, 95, 126, (byte)196, (byte)164, (byte)185, 33, 17, 34, 29, 105, (byte)240, 82, 25, 0, (byte)241, 119, 127, (byte)151, 49, (byte)252, (byte)209, 114, 3, 69, 89, 105, 114, 73, 103, (byte)199, (byte)242, 46, 9, (byte)229, (byte)190, (byte)141, 84, (byte)207, 12, (byte)219, 121, 94, 97, (byte)169, 2, (byte)178, 54, (byte)242, (byte)196, (byte)195, (byte)228, 116, 29, 82, (byte)233, (byte)205, (byte)232, 67, (byte)169, 11, (byte)246, (byte)174, (byte)192, (byte)154, (byte)195, (byte)204, 106, (byte)202, (byte)158, 113, (byte)172, (byte)186, (byte)219, (byte)251, 124, (byte)251, (byte)200, (byte)174, (byte)153, (byte)154, 62, (byte)135, 63, (byte)225, 78, (byte)196, (byte)179, 5, 40, (byte)201, (byte)232, 99, (byte)211, (byte)219, 102, 45, 21, (byte)233, (byte)130, 126, 99, (byte)150, 10, 12, (byte)203, 31, (byte)203, (byte)211, 92, (byte)255, 61, (byte)175, (byte)142, 31, (byte)220, 9, (byte)177, (byte)191, (byte)167, 58, (byte)203, 124, 82, 69, (byte)248, (byte)167, 102, 49, 52, 54, 12, (byte)236, 49, (byte)149, (byte)166, 88, (byte)142, (byte)240, 21, 42, 12, (byte)187, (byte)247, (byte)202, (byte)158, (byte)148, (byte)249, 61, 2, 3, 1, 0, 1};
-	
+	private static final byte[] stellitePubKey = {-70, -101, -25, 125, -61, -1, 64, -63, 43, 102, 111, 70, 32, -88, -18, 103, -41, -111, -39, 19, -89, -44, -125, 126, 111, -23, 12, 50, 111, -50, -61, -9, -84, 108, 86, -65, 108, -41, -47, -38, -7, 101, -41, -44, 7, -70, -7, 48, 53, -103, 54, 99, 65, -71, -78, 80, -27, -62, -96, 126, -108, -85, -48, -115, -50, 124, -121, -13, -119, -96, -126, 100, 65, -78, 13, -79, -109, 89, -12, -46, 5, 124, 72, 44, -56, -18, 111, -84, 9, -9, -21, 80, 61, -14, 57, -107, 80, -102, -37, 107, 78, -35, -121, -108, -71, 41, 65, -109, 6, 86, -112, 63, 9, -77, -108, -71, 33, 82, -46, -28, 122, -44, -59, 35, -92, 81, -28, -43, -17, -98, -73, 30, 79, -50, -99, 48, -22, 77, 14, -40, 25, 65, 3, 68, -110, -74, 110, 98, -89, 77, -121, -79, 111, -61, -104, -98, -115, -112, -28, -36, -26, -65, 72, -40, -127, 115, 29, 76, 126, 52, -56, 116, -62, 41, 85, 65, 81, 22, -36, -31, -39, 101, 127, 106, 70, -84, -36, 20, 6, 99, -68, -91, -74, 125, -57, 15, -21, -16, 76, 78, -105, 16, 36, -39, -2, -45, 38, -98, -64, -107, -42, -87, 60, -15, -45, -61, 54, -84, 89, -90, 0, -51, 0, -64, 82, 125, 46, 72, 106, -71, 52, -75, -80, 16, 113, 52, 104, 110, 40, -7, -71, 73, 80, -107, 121, 96, -100, -48, -11, 67, 28, 112, 101, 109, 82, -25, 1, 0, 1};	
 	private static final byte INS_GET_VERSION		       = (byte)0x30;
     private static final byte INS_REQ_TXS_CIPHER           = (byte)0x31;
     private static final byte INS_VERIFY_TXS_CIPHER        = (byte)0x32;	
@@ -39,7 +35,6 @@ public class Stellitecard extends Applet {
     private static short pubKeyOffset = (short)256;
 	
 	private static byte[] RamBuffer;
-	private static byte[] CipherBuffer;
 	private static final short RAM_BUFFER_1 = (short) 1;
 	private static final short RAM_BUFFER_2 = (short) 2;
 	private static final short RAM_BUFFER_4 = (short) 4;
@@ -56,8 +51,8 @@ public class Stellitecard extends Applet {
 	public static final byte TXS_TYPE_RESERVED = 1;	
 	
 	// note the maximum card txs is capped at 4 billion times
-	private static short invocationCounterHi;
-	private static short invocationCounterLo;
+	private static byte invocationCounterHi;
+	private static byte invocationCounterLo;
 	private static RandomData RandomSalts;
 	private static byte[] RnDBuffer;
 	private static Cipher RSA2048Encryptor;
@@ -67,6 +62,7 @@ public class Stellitecard extends Applet {
 	private static byte[] TXSResult;
 	private static byte[] TXSType;
 	private static byte[] TXSAmount;
+	private static byte[] signedTxs;
 
 	public static void install(byte[] bArray, short bOffset, byte bLength) {
 		// GP-compliant JavaCard applet registration
@@ -74,6 +70,7 @@ public class Stellitecard extends Applet {
 				bArray[bOffset]);
 		// objects initialization at applet installation
 		RamBuffer = JCSystem.makeTransientByteArray(RAM_BUFFER_256, JCSystem.CLEAR_ON_RESET);
+		signedTxs = JCSystem.makeTransientByteArray(RAM_BUFFER_256, JCSystem.CLEAR_ON_RESET);
 		TXSAmount = JCSystem.makeTransientByteArray(RAM_BUFFER_4, JCSystem.CLEAR_ON_RESET);	
 		RnDBuffer = JCSystem.makeTransientByteArray(RAM_BUFFER_16, JCSystem.CLEAR_ON_RESET);	
 		TXSResult = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);
@@ -96,6 +93,11 @@ public class Stellitecard extends Applet {
 		RSA2048Verificator.init(RSAPubKey, Signature.MODE_VERIFY);
 	}
 	
+	/*
+	 *
+	 * TXS Encryption 
+	 * 
+	 */
 	private void stelliteTxsEncrypt(APDU apdu){
 		short P1, P2,bDataLength;
 		byte[] apduBuffer = apdu.getBuffer();
@@ -106,74 +108,96 @@ public class Stellitecard extends Applet {
 			ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
 		}
 		bDataLength = (short)((short)0x00FF & apduBuffer[ISO7816.OFFSET_LC]);
+		// filter by length
+		if(bDataLength > 0x66){
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}		
 		apdu.setIncomingAndReceive();
 		Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
 		Util.arrayCopyNonAtomic(apduBuffer, (short)5, RamBuffer, (short)0, bDataLength);		
-		// TODO get random number
+		// get random number
 		RandomSalts.generateData(RnDBuffer, (short)0, (short)16);
-		// TODO construct (txsdestaddr+txstype+txsamount+credentialhash+random) on RAM
-		Util.arrayCopyNonAtomic(TXSType, (short)0, RamBuffer, (short)97,(short)TXSType.length);
-		Util.arrayCopyNonAtomic(TXSAmount, (short)0, RamBuffer, (short)(97+1),(short)TXSAmount.length);
+		// buffer txs type and txs amount
+		Util.arrayCopyNonAtomic(RamBuffer, (short)0, TXSType, (short)0,(short)TXSType.length);
+		Util.arrayCopyNonAtomic(RamBuffer, (short)1, TXSAmount, (short)0,(short)TXSAmount.length);
+		// construct (txstype + txsamount + txsdestaddr + credentialhash + random) on RAM		
 		Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)(97+1+4),(short)userHash.length);
 		Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)(97+1+4+(short)userHash.length),(short)RnDBuffer.length);
-		// TODO encrypt all
-	    RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);	
-		// TODO send the result 
+		// encrypt all
+		RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);	
+		// send the result 
 		Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
         apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length); 		
-	}
+	}	
 	
+	/*
+	 * 
+	 * TXS Verification 
+	 * 
+	 */
 	private void stelliteTxsVerify(APDU apdu){
 		short P1, P2,bDataLength;
 		byte[] apduBuffer = apdu.getBuffer();
 		P1 = apduBuffer[ISO7816.OFFSET_P1];
 		P2 = apduBuffer[ISO7816.OFFSET_P2];
-		if(((byte)0 != P1) && ((byte)0 != P2))
+		if((byte)0 != P1)
 		{
 			ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
 		}
 		bDataLength = (short)((short)0x00FF & apduBuffer[ISO7816.OFFSET_LC]);
+		// filter by length
+		if(bDataLength > 0x80){
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
 		apdu.setIncomingAndReceive();
 		Util.arrayCopyNonAtomic(apduBuffer, (short)5, RamBuffer, (short)0, bDataLength);
-		// TODO get signature
-		byte[] sig256 = new byte[256];
-		Util.arrayCopyNonAtomic(RamBuffer, (short)0, sig256, (short) 0, (short)RamBuffer.length);
-		// TODO construct (txs type + txs amount + random) on RAM
-		Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
-		RamBuffer[0] = TXSType[0];
-		Util.arrayCopyNonAtomic(TXSAmount, (short)0, RamBuffer, (short) 1, (short)TXSAmount.length);
-		Util.arrayCopyNonAtomic(TXSAmount, (short)0, RamBuffer, (short) 1, (short)TXSAmount.length);
-		Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short) 5, (short)RnDBuffer.length);
-		// TODO verify signature from (txs type + txs amount + random)
-		boolean ret = RSA2048Verificator.verify(RamBuffer, (short)0, (short)RamBuffer.length, sig256, (short)0, (short)sig256.length);
-        if(ret==false){
-        	TXSResult[0] = TXS_ERROR_SIGNATURE;
-        }else{
-        	TXSResult[0] = TXS_OK;
-        }
-        // TODO increment invocation counter -- can't compile if below code is uncommented
-//        if(invocationCounterLo==65534){
-//        	invocationCounterHi++;
-//        	invocationCounterLo=0;
-//        }else{
-        	invocationCounterLo++;
-//        }        
-        // TODO construct (credentialhash + txs result + incremented invocation counter + random)
-        Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
-        Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short) 0, (short)(userHash.length/2));
-        RamBuffer[userHash.length/2] = TXSResult[0];
-        RamBuffer[(userHash.length/2)+1]=(byte)(invocationCounterLo & 0xff);
-        RamBuffer[(userHash.length/2)+2]=(byte)((invocationCounterLo >> 8) & 0xff);
-        RamBuffer[(userHash.length/2)+3]=(byte)(invocationCounterHi & 0xff);
-        RamBuffer[(userHash.length/2)+4]=(byte)((invocationCounterHi >> 8) & 0xff);
-        Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)((userHash.length/2)+5), (short)RnDBuffer.length);
-		// TODO encrypt (credentialhash + txs result + incremented invocation counter + random)
-        RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);
-        // TODO send the encrypted data
-		Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
-		apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length);
+		// get signature partially by using P2 as flag
+		if(P2==0x00){
+			// P2 zero mean first 128 byte signature
+			Util.arrayCopyNonAtomic(RamBuffer, (short)0, signedTxs, (short) 0, (short)(signedTxs.length/2));
+		}else{
+			// P2 other than zero mean last 128 byte signature
+			Util.arrayCopyNonAtomic(RamBuffer, (short)0, signedTxs, (short)(signedTxs.length/2), (short)(signedTxs.length/2));
+			// construct (txs type + txs amount + random) on RAM
+			Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
+			Util.arrayCopyNonAtomic(TXSType, (short)0, RamBuffer, (short) 0, (short)TXSType.length);
+			Util.arrayCopyNonAtomic(TXSAmount, (short)0, RamBuffer, (short) 1, (short)TXSAmount.length);
+			Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short) 5, (short)RnDBuffer.length);
+			// verify signature from (txs type + txs amount + random)
+			boolean ret = RSA2048Verificator.verify(RamBuffer, (short)0, (short)RamBuffer.length, signedTxs, (short)0, (short)signedTxs.length);
+	        if(ret==false){
+	        	TXSResult[0] = TXS_ERROR_SIGNATURE;
+	        }else{
+	        	TXSResult[0] = TXS_OK;
+	        }
+	        // increment invocation counter
+	        invocationCounterLo++;
+	        if(invocationCounterLo==0){
+	        	invocationCounterHi++;
+	        }
+	        // construct (txs result + credential hash + incremented invocation counter + random)
+	        Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
+			Util.arrayCopyNonAtomic(TXSResult, (short)0, RamBuffer, (short)0,(short)TXSResult.length);
+			Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)1,(short)userHash.length);
+			RandomSalts.generateData(RnDBuffer, (short)0, (short)16);
+			Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)(1+(short)userHash.length),(short)RnDBuffer.length);
+	        RamBuffer[(1+(short)userHash.length)+1]=(byte)(invocationCounterLo & 0xff);
+	        RamBuffer[(1+(short)userHash.length)+2]=(byte)((invocationCounterLo >> 8) & 0xff);
+	        RamBuffer[(1+(short)userHash.length)+3]=(byte)(invocationCounterHi & 0xff);
+	        RamBuffer[(1+(short)userHash.length)+4]=(byte)((invocationCounterHi >> 8) & 0xff);
+			// encrypt
+	        RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);
+	        // send the encrypted data
+			Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
+			apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length);			
+		}
 	}	
 	
+	/*
+	 * 
+	 *  GET VERSION
+	 * 
+	 */
 	private void getCardVersion(APDU apdu)
 	{
 		byte[] SAMInfo = {'S','t','e','l','l','i','t','e','C','a','r','d','-','v','1','.','0'};
@@ -193,6 +217,11 @@ public class Stellitecard extends Applet {
 		apdu.setOutgoingAndSend((short)0, SAM_INFO_MAX);		
 	}
 	
+	/*
+	 * 
+	 * (non-Javadoc)
+	 * @see javacard.framework.Applet#process(javacard.framework.APDU)
+	 */
 	public void process(APDU apdu) {
 		// Good practice: Return 9000 on SELECT
 		if (selectingApplet()) {
@@ -202,14 +231,13 @@ public class Stellitecard extends Applet {
 		switch (buf[ISO7816.OFFSET_INS]) {
 		case (byte) INS_GET_VERSION:
 			getCardVersion(apdu);
-//			genRsaKeyPair(apdu);
 			break;	
 		case (byte) INS_REQ_TXS_CIPHER:
 			stelliteTxsEncrypt(apdu);
 			break;	
 		case (byte) INS_VERIFY_TXS_CIPHER:
 			stelliteTxsVerify(apdu);
-			break;				
+			break;	
 		default:
 			// good practice: If you don't know the INStruction, say so:
 			ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
