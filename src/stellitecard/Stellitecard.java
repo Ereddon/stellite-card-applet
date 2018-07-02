@@ -10,11 +10,14 @@ import javacard.framework.Util;
 import javacard.framework.APDU;
 import javacard.framework.JCSystem;
 import javacard.security.KeyBuilder;
+import javacard.security.KeyPair;
+import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
 import javacard.security.RandomData;
 import javacardx.crypto.Cipher;
 import javacard.security.MessageDigest;
 import javacard.security.Signature;
+import javacard.security.CryptoException;
 
 /**
  * @author 
@@ -36,6 +39,7 @@ public class Stellitecard extends Applet {
     private static short pubKeyOffset = (short)256;
 	
 	private static byte[] RamBuffer;
+	private static byte[] CipherBuffer;
 	private static final short RAM_BUFFER_1 = (short) 1;
 	private static final short RAM_BUFFER_2 = (short) 2;
 	private static final short RAM_BUFFER_4 = (short) 4;
@@ -59,6 +63,7 @@ public class Stellitecard extends Applet {
 	private static Cipher RSA2048Encryptor;
 	private static Signature RSA2048Verificator;
 	private static RSAPublicKey RSAPubKey;
+	private static MessageDigest sha256;
 	private static byte[] TXSResult;
 	private static byte[] TXSType;
 	private static byte[] TXSAmount;
@@ -72,9 +77,10 @@ public class Stellitecard extends Applet {
 		TXSAmount = JCSystem.makeTransientByteArray(RAM_BUFFER_4, JCSystem.CLEAR_ON_RESET);	
 		RnDBuffer = JCSystem.makeTransientByteArray(RAM_BUFFER_16, JCSystem.CLEAR_ON_RESET);	
 		TXSResult = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);
-		TXSType = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);		
+		TXSType = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);	
+		userHash = JCSystem.makeTransientByteArray(RAM_BUFFER_32, JCSystem.CLEAR_ON_RESET);
 		RandomSalts = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
-		RSA2048Encryptor = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
+		RSA2048Encryptor = Cipher.getInstance(Cipher.ALG_RSA_NOPAD, false);
 		RSA2048Verificator = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 		RSAPubKey = (RSAPublicKey)KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_2048, false);
 		// objects initial value 
@@ -82,10 +88,10 @@ public class Stellitecard extends Applet {
 		invocationCounterHi = 0;
 		RSAPubKey.setModulus(stellitePubKey, (short)0, pubKeyOffset);
 		RSAPubKey.setExponent(stellitePubKey, pubKeyOffset, (short)3);
-		Util.arrayCopy(userEmail, (short)0, userHash, (short)0, (short)userEmail.length);
-		Util.arrayCopy(userPassword, (short)0, userHash, (short)userEmail.length, (short)userPassword.length);
-		MessageDigest sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
-		sha256.doFinal(userHash, (short)0, (short)userHash.length, userHash, (short)0);
+		sha256 = MessageDigest.getInstance(MessageDigest.ALG_SHA_256, false);
+		Util.arrayCopyNonAtomic(userEmail, (short)0, userHash, (short)0, (short)userEmail.length);
+		Util.arrayCopyNonAtomic(userPassword, (short)0, userHash, (short)userEmail.length, (short)userPassword.length);
+		sha256.doFinal(userHash, (short)0, (short)userHash.length, userHash, (short)0);	
 		RSA2048Encryptor.init(RSAPubKey, Cipher.MODE_ENCRYPT);
 		RSA2048Verificator.init(RSAPubKey, Signature.MODE_VERIFY);
 	}
@@ -106,10 +112,12 @@ public class Stellitecard extends Applet {
 		// TODO get random number
 		RandomSalts.generateData(RnDBuffer, (short)0, (short)16);
 		// TODO construct (txsdestaddr+txstype+txsamount+credentialhash+random) on RAM
-		Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)(97+1+4),(short)(userHash.length/2));
-		Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)(97+1+4+((short)userHash.length/2)),(short)RnDBuffer.length);
+		Util.arrayCopyNonAtomic(TXSType, (short)0, RamBuffer, (short)97,(short)TXSType.length);
+		Util.arrayCopyNonAtomic(TXSAmount, (short)0, RamBuffer, (short)(97+1),(short)TXSAmount.length);
+		Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)(97+1+4),(short)userHash.length);
+		Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)(97+1+4+(short)userHash.length),(short)RnDBuffer.length);
 		// TODO encrypt all
-		RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);
+	    RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);	
 		// TODO send the result 
 		Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
         apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length); 		
@@ -166,7 +174,7 @@ public class Stellitecard extends Applet {
 		apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length);
 	}	
 	
-	private void process_GetCardVersion(APDU apdu)
+	private void getCardVersion(APDU apdu)
 	{
 		byte[] SAMInfo = {'S','t','e','l','l','i','t','e','C','a','r','d','-','v','1','.','0'};
 		short SAM_INFO_MAX = (short) 17;
@@ -193,7 +201,8 @@ public class Stellitecard extends Applet {
 		byte[] buf = apdu.getBuffer();
 		switch (buf[ISO7816.OFFSET_INS]) {
 		case (byte) INS_GET_VERSION:
-			process_GetCardVersion(apdu);
+			getCardVersion(apdu);
+//			genRsaKeyPair(apdu);
 			break;	
 		case (byte) INS_REQ_TXS_CIPHER:
 			stelliteTxsEncrypt(apdu);
