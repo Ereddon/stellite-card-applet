@@ -29,10 +29,10 @@ public class Stellitecard extends Applet {
 	// stellitepay public key
 	private static final byte[] stellitePubKey = {-70, -101, -25, 125, -61, -1, 64, -63, 43, 102, 111, 70, 32, -88, -18, 103, -41, -111, -39, 19, -89, -44, -125, 126, 111, -23, 12, 50, 111, -50, -61, -9, -84, 108, 86, -65, 108, -41, -47, -38, -7, 101, -41, -44, 7, -70, -7, 48, 53, -103, 54, 99, 65, -71, -78, 80, -27, -62, -96, 126, -108, -85, -48, -115, -50, 124, -121, -13, -119, -96, -126, 100, 65, -78, 13, -79, -109, 89, -12, -46, 5, 124, 72, 44, -56, -18, 111, -84, 9, -9, -21, 80, 61, -14, 57, -107, 80, -102, -37, 107, 78, -35, -121, -108, -71, 41, 65, -109, 6, 86, -112, 63, 9, -77, -108, -71, 33, 82, -46, -28, 122, -44, -59, 35, -92, 81, -28, -43, -17, -98, -73, 30, 79, -50, -99, 48, -22, 77, 14, -40, 25, 65, 3, 68, -110, -74, 110, 98, -89, 77, -121, -79, 111, -61, -104, -98, -115, -112, -28, -36, -26, -65, 72, -40, -127, 115, 29, 76, 126, 52, -56, 116, -62, 41, 85, 65, 81, 22, -36, -31, -39, 101, 127, 106, 70, -84, -36, 20, 6, 99, -68, -91, -74, 125, -57, 15, -21, -16, 76, 78, -105, 16, 36, -39, -2, -45, 38, -98, -64, -107, -42, -87, 60, -15, -45, -61, 54, -84, 89, -90, 0, -51, 0, -64, 82, 125, 46, 72, 106, -71, 52, -75, -80, 16, 113, 52, 104, 110, 40, -7, -71, 73, 80, -107, 121, 96, -100, -48, -11, 67, 28, 112, 101, 109, 82, -25, 1, 0, 1};	
 	private static final byte INS_GET_VERSION		       = (byte)0x30;
-    private static final byte INS_REQ_TXS_CIPHER           = (byte)0x31;
-    private static final byte INS_VERIFY_TXS_CIPHER        = (byte)0x32;	
-    
-    private static short pubKeyOffset = (short)256;
+	private static final byte INS_REQ_TXS_CIPHER           = (byte)0x31;
+	private static final byte INS_VERIFY_TXS_CIPHER        = (byte)0x32;	
+	
+	private static short pubKeyOffset = (short)256;
 	
 	private static byte[] RamBuffer;
 	private static final short RAM_BUFFER_1 = (short) 1;
@@ -46,7 +46,7 @@ public class Stellitecard extends Applet {
 	
 	public static final byte TXS_OK = 0;
 	public static final byte TXS_ERROR_SIGNATURE = 1;
-
+	
 	public static final byte TXS_TYPE_TRANSFER = 0;
 	public static final byte TXS_TYPE_RESERVED = 1;	
 	
@@ -109,7 +109,7 @@ public class Stellitecard extends Applet {
 		}
 		bDataLength = (short)((short)0x00FF & apduBuffer[ISO7816.OFFSET_LC]);
 		// filter by length
-		if(bDataLength > 0x66){
+		if(bDataLength != 0x66){
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}		
 		apdu.setIncomingAndReceive();
@@ -127,7 +127,7 @@ public class Stellitecard extends Applet {
 		RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);	
 		// send the result 
 		Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
-        apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length); 		
+		apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length); 		
 	}	
 	
 	/*
@@ -146,7 +146,7 @@ public class Stellitecard extends Applet {
 		}
 		bDataLength = (short)((short)0x00FF & apduBuffer[ISO7816.OFFSET_LC]);
 		// filter by length
-		if(bDataLength > 0x80){
+		if(bDataLength != 0x80){
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 		apdu.setIncomingAndReceive();
@@ -165,29 +165,29 @@ public class Stellitecard extends Applet {
 			Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short) 5, (short)RnDBuffer.length);
 			// verify signature from (txs type + txs amount + random)
 			boolean ret = RSA2048Verificator.verify(RamBuffer, (short)0, (short)RamBuffer.length, signedTxs, (short)0, (short)signedTxs.length);
-	        if(ret==false){
-	        	TXSResult[0] = TXS_ERROR_SIGNATURE;
-	        }else{
-	        	TXSResult[0] = TXS_OK;
-	        }
-	        // increment invocation counter
-	        invocationCounterLo++;
-	        if(invocationCounterLo==0){
-	        	invocationCounterHi++;
-	        }
-	        // construct (txs result + credential hash + incremented invocation counter + random)
-	        Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
+			if(ret==false){
+				TXSResult[0] = TXS_ERROR_SIGNATURE;
+			}else{
+				TXSResult[0] = TXS_OK;
+			}
+			// increment invocation counter
+			invocationCounterLo++;
+			if(invocationCounterLo==0){
+				invocationCounterHi++;
+			}
+			// construct (txs result + credential hash + incremented invocation counter + random)
+			Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
 			Util.arrayCopyNonAtomic(TXSResult, (short)0, RamBuffer, (short)0,(short)TXSResult.length);
 			Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)1,(short)userHash.length);
 			RandomSalts.generateData(RnDBuffer, (short)0, (short)16);
 			Util.arrayCopyNonAtomic(RnDBuffer, (short)0, RamBuffer, (short)(1+(short)userHash.length),(short)RnDBuffer.length);
-	        RamBuffer[(1+(short)userHash.length)+1]=(byte)(invocationCounterLo & 0xff);
-	        RamBuffer[(1+(short)userHash.length)+2]=(byte)((invocationCounterLo >> 8) & 0xff);
-	        RamBuffer[(1+(short)userHash.length)+3]=(byte)(invocationCounterHi & 0xff);
-	        RamBuffer[(1+(short)userHash.length)+4]=(byte)((invocationCounterHi >> 8) & 0xff);
+			RamBuffer[(1+(short)userHash.length)+1]=(byte)(invocationCounterLo & 0xff);
+			RamBuffer[(1+(short)userHash.length)+2]=(byte)((invocationCounterLo >> 8) & 0xff);
+			RamBuffer[(1+(short)userHash.length)+3]=(byte)(invocationCounterHi & 0xff);
+			RamBuffer[(1+(short)userHash.length)+4]=(byte)((invocationCounterHi >> 8) & 0xff);
 			// encrypt
-	        RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);
-	        // send the encrypted data
+			RSA2048Encryptor.doFinal(RamBuffer, (short)0, (short)RamBuffer.length, RamBuffer, (short)0);
+			// send the encrypted data
 			Util.arrayCopyNonAtomic(RamBuffer, (short)0, apduBuffer, (short)0, (short)RamBuffer.length);
 			apdu.setOutgoingAndSend((short)0, (short)RamBuffer.length);			
 		}
@@ -207,12 +207,12 @@ public class Stellitecard extends Applet {
 		byte[] apduBuffer = apdu.getBuffer();
 		P1 = apduBuffer[ISO7816.OFFSET_P1];
 		P2 = apduBuffer[ISO7816.OFFSET_P2];
-	
+		
 		if(((byte)0x00 != P1) && ((byte)0x00 != P2))
 		{
 			ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
 		}
-
+		
 		Util.arrayCopyNonAtomic(SAMInfo, (short)0, apduBuffer, (short)0, SAM_INFO_MAX);
 		apdu.setOutgoingAndSend((short)0, SAM_INFO_MAX);		
 	}
