@@ -197,12 +197,13 @@ public class Stellitecard extends Applet {
 				TXSResult[0] = TXS_ERROR_SIGNATURE;
 			}else{
 				TXSResult[0] = TXS_OK;
+				// increment invocation counter
+				invocationCounterLo++;
+				if(invocationCounterLo==0){
+					invocationCounterHi++;
+				}				
 			}
-			// increment invocation counter
-			invocationCounterLo++;
-			if(invocationCounterLo==0){
-				invocationCounterHi++;
-			}
+
 			// construct (txs result + credential hash + incremented invocation counter + random)
 			Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
 			Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short) 0, (short)userHash.length);
