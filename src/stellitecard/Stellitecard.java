@@ -49,10 +49,17 @@ import javacard.security.Signature;
  */
 public class Stellitecard extends Applet {
 
-	// user credentials are meant to be hardcoded for security, at least for now. Example below for user email "test@xtl.cash" and password "password"
+	// -- CHANGE ME!
 	
-	private static final byte[] userEmail = {'t','e','s','t','@','x','t','l','.','c','a','s','h'};
+	// user credentials are meant to be hardcoded for security, at least for now. Example below for user email "test@stellite.cash" and password "password"
+	private static final byte[] userEmail = {'t','e','s','t','@','s','t','e','l','l','i','t','e','.','c','a','s','h'};
+	// use password key (MAXIMUM 20 CHARACTER PASSWORD SUPPORTED)
 	private static final byte[] userPassword = {'p','a','s','s','w','o','r','d'};	
+	// use api key -- NOT USED for V1.0
+	//private static final byte[] apiKey = {'1','2','3','4','5','6','7','8','1','2','3','4','5','6','7','8','1','2','3','4','5','6','7','8','1','2','3','4','5','6','7','8'};	
+
+	// -- DO NOT CHANGE BELOW THIS LINE
+	
 	private static byte[] userCredentials;
 	
 	// using static public key for now -- DO NOT CHANGE BELOW THIS LINE
@@ -104,7 +111,12 @@ public class Stellitecard extends Applet {
 		TXSResult = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);
 		TXSType = JCSystem.makeTransientByteArray(RAM_BUFFER_1, JCSystem.CLEAR_ON_RESET);	
 		userHash = JCSystem.makeTransientByteArray(RAM_BUFFER_20, JCSystem.CLEAR_ON_RESET);
-		userCredentials = JCSystem.makeTransientByteArray((short)(userEmail.length + userPassword.length), JCSystem.CLEAR_ON_RESET);
+		
+		// use password
+		userCredentials = JCSystem.makeTransientByteArray((short)userPassword.length, JCSystem.CLEAR_ON_RESET);
+		// use api key
+		//userCredentials = JCSystem.makeTransientByteArray((short)(apiKey.length), JCSystem.CLEAR_ON_RESET);
+		
 		RandomSalts = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
 		RSA2048Encryptor = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
 		RSA2048Verificator = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
@@ -144,9 +156,16 @@ public class Stellitecard extends Applet {
 		Util.arrayCopyNonAtomic(RamBuffer, (short)0, TXSType, (short)0,(short)TXSType.length);
 		Util.arrayCopyNonAtomic(RamBuffer, (short)1, TXSAmount, (short)0,(short)TXSAmount.length);
 		// calculate user hash
-		Util.arrayCopyNonAtomic(userEmail, (short)0, userCredentials, (short)0,(short)userEmail.length);
-		Util.arrayCopyNonAtomic(userPassword, (short)0, userCredentials, (short)userEmail.length,(short)userPassword.length);
-		sha256.doFinal(userCredentials, (short)0, (short)userCredentials.length, userHash, (short)0);
+		
+		// use password
+		Util.arrayCopyNonAtomic(userPassword, (short)0, userCredentials, (short)0,(short)userPassword.length);
+		// use api key
+		//Util.arrayCopyNonAtomic(apiKey, (short)0, userCredentials, (short)0,(short)apiKey.length);
+		
+		// not hashed
+		//sha256.doFinal(userCredentials, (short)0, (short)userCredentials.length, userHash, (short)0);
+		// copy password directly into userHash
+		Util.arrayCopyNonAtomic(userCredentials, (short)0, userHash, (short)0,(short)userCredentials.length);
 		Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short)(64+1+4),(short)userHash.length);
 		// get random number
 		RandomSalts.generateData(RnDBuffer, (short)0, (short)16);		
@@ -197,12 +216,13 @@ public class Stellitecard extends Applet {
 				TXSResult[0] = TXS_ERROR_SIGNATURE;
 			}else{
 				TXSResult[0] = TXS_OK;
+				// increment invocation counter
+				invocationCounterLo++;
+				if(invocationCounterLo==0){
+					invocationCounterHi++;
+				}				
 			}
-			// increment invocation counter
-			invocationCounterLo++;
-			if(invocationCounterLo==0){
-				invocationCounterHi++;
-			}
+
 			// construct (txs result + credential hash + incremented invocation counter + random)
 			Util.arrayFillNonAtomic(RamBuffer, (short) 0, (short)RamBuffer.length, (byte) 0);
 			Util.arrayCopyNonAtomic(userHash, (short)0, RamBuffer, (short) 0, (short)userHash.length);
